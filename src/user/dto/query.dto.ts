@@ -16,5 +16,5 @@ export class QueryUserDto {
 
     @IsOptional()
     @IsString()
-    name?: string
+    search?: string
 }

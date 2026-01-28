@@ -1,65 +1,66 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from './entity/user.entity';
+import { ILike, Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt'
+import { QueryUserDto } from './dto/query.dto';
 
 @Injectable()
 export class UserService {
-  private users: {
-    id: number;
-    name: string;
-  }[] = [];
-  private id = 1;
 
-  create(dto: CreateUserDto) {
-    const user = {
-      id: this.id++,
-      name: dto.name
-    };
-    this.users.push(user);
+  constructor(
+    @InjectRepository(User) private readonly repo: Repository<User>) { }
+
+  async create(dto: CreateUserDto) {
+    const { email, password, name } = dto;
+
+    const exists = await this.repo.exists({ where: { email } })
+    if (exists) throw new ConflictException('email already exists')
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = this.repo.create({
+      email,
+      name,
+      password: passwordHash,
+      role: 'user'
+    });
+    return this.repo.save(user)
+  }
+
+  async findAll(query: QueryUserDto) {
+    const { page, limit, search } = query;
+
+    const [items, total] = await this.repo.findAndCount({
+      where: search ? [
+        { name: ILike(`%${search}%`) },
+        { email: ILike(`%${search}%`) }
+      ]: {},
+      order: { id: 'ASC'},
+      take: limit,
+      skip: (page - 1) * limit
+    });
+    return { total, page, limit, items }
+  } 
+
+  async findOne(id: number) {
+    const user = await this.repo.findOneBy({ id });
+    if (!user) throw new NotFoundException(`user with id ${id} not found`)
     return user;
   }
 
-  findAllWithQuery(query: {
-    page: number;
-    limit: number;
-    name?: string;
-  }) {
-    const { page, limit, name } = query
-    let data = [...this.users]
-
-    if (name) {
-      data = data.filter(u => u.name.toLowerCase().includes(name.toLowerCase())
-      )
-    }
-    const total = data.length;
-
-    const start = (page - 1) * limit
-    const end = start + limit
-    const items = data.slice(start, end)
-
-    return {
-      total,
-      page,
-      limit,
-      items,
-    };
+  async update(id: number, dto: UpdateUserDto) {
+    const user = await this.repo.findOneBy({id})
+    if(!user) throw new NotFoundException('user not found')
+      if (dto.name) user.name = dto.name
+    return this.repo.save(user)
   }
 
-  findOne(id: number) {
-    const user = this.users.find(u => u.id === id)
-    if (!user) throw new NotFoundException('user not found')
-    return user
-  }
-
-  update(id: number, dto: UpdateUserDto) {
-    const user = this.findOne(id)
-    if (dto.name) user.name = dto.name
-    return user;
-  }
-
-  remove(id: number) {
-    const user = this.findOne(id)
-    this.users = this.users.filter(u => u.id !== id)
-    return { message: `user with id ${id} deleted` }
+  async remove(id: number) {
+    const res =  await this.repo.softDelete(id)
+    if (!res.affected) throw new NotFoundException('user not found')
+      return;
   }
 }

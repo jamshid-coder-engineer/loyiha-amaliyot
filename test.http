@@ -1,38 +1,32 @@
-### O'zgaruvchi e'lon qilish (qulaylik uchun)
-@baseUrl = http://localhost:3000
+@baseUrl = http://localhost:3000/api/v1
+@ts = {{$timestamp}}
 
-### 1. Yangi foydalanuvchi yaratish (POST)
-POST {{baseUrl}}/auth/login
+### Create user
+POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "email": "admin@test.com",
-  "password": "123456"
+  "email": "user{{ts}}@test.com",
+  "password": "123456",
+  "name": "Ali {{ts}}"
 }
 
-### 2. Barcha foydalanuvchilarni olish (GET)
-GET {{baseUrl}}/users/admin/stats
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5AdGVzdC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Njk2MTI5NDYsImV4cCI6MTc2OTYxNjU0Nn0.-qnydKj91i0EhCqF4sigUY4IGkoa-3yKqpq_lnjuGBQ
+### List users (page/limit)
+GET {{baseUrl}}/users?page=1&limit=5
 
-# {
-#   "total": 3,
-#   "page": 1,
-#   "limit": 10,
-#   "items": [...]
-# }
+### Search users
+GET {{baseUrl}}/users?search=vali&page=1&limit=10
 
-### 3. Bitta foydalanuvchini ID orqali olish (GET)
-# Bu yerda 1 - foydalanuvchi IDsi. Agar u yo'q bo'lsa 404 qaytadi.
-GET {{baseUrl}}/users/1
-
-### 4. Foydalanuvchi ma'lumotini yangilash (PUT)
+### Update user #1
 PATCH {{baseUrl}}/users/1
 Content-Type: application/json
 
 {
-    "name": "Vali"
+  "name": "Updated name"
 }
 
-### 5. Foydalanuvchini o'chirish (DELETE)
-# Sizda @HttpCode(204) qo'yilgan, shuning uchun muvaffaqiyatli bo'lsa javob bo'sh qaytadi.
+### Soft delete user #1
 DELETE {{baseUrl}}/users/1
+
+### Get user #1 (should be 404 after delete)
+GET {{baseUrl}}/users
