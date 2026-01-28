@@ -4,7 +4,13 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
+import type { Request } from 'express';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/auth/role-enum';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) { }
@@ -14,19 +20,31 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
+  @ApiBearerAuth()
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  getMe(@Req() req) {
+  getMe(@Req() req: Request) {
     return {
       message: 'protected data',
-user: req.user
+      user: req.user
     }
   }
 
-@Get()
-findAll(@Query() query: QueryUserDto) {
-  return this.userService.findAllWithQuery(query);
-}
+  @Get('admin/stats')
+  @Roles(Role.ADMIN)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  getAdminStats() {
+    return {
+      message: 'Admin only data',
+      totalUsers: 100,
+    };
+  }
+
+
+  @Get()
+  findAll(@Query() query: QueryUserDto) {
+    return this.userService.findAllWithQuery(query);
+  }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);

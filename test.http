@@ -11,8 +11,8 @@ Content-Type: application/json
 }
 
 ### 2. Barcha foydalanuvchilarni olish (GET)
-GET {{baseUrl}}/users/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5AdGVzdC5jb20iLCJpYXQiOjE3Njk1OTU1OTEsImV4cCI6MTc2OTU5OTE5MX0.mKnZSSZNX-9sX-dzsU8Z56iALxgbYhNaQ3BR2Nt37S0
+GET {{baseUrl}}/users/admin/stats
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImVtYWlsIjoiYWRtaW5AdGVzdC5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3Njk2MTI5NDYsImV4cCI6MTc2OTYxNjU0Nn0.-qnydKj91i0EhCqF4sigUY4IGkoa-3yKqpq_lnjuGBQ
 
 # {
 #   "total": 3,
