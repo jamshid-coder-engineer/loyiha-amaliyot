@@ -1,32 +1,20 @@
 @baseUrl = http://localhost:3000/api/v1
-@ts = {{$timestamp}}
 
-### Create user
+### 1) First call (DB)
+GET {{baseUrl}}/users?page=1&limit=5
+
+### 2) Second call (Redis cached: true bo‘lishi kerak)
+GET {{baseUrl}}/users?page=1&limit=5
+
+### 3) Create user -> cache clears
 POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "email": "user{{ts}}@test.com",
+  "email": "cachetest{{$timestamp}}@test.com",
   "password": "123456",
-  "name": "Ali {{ts}}"
+  "name": "Cache Test"
 }
 
-### List users (page/limit)
-GET {{baseUrl}}/users?page=1&limit=5
-
-### Search users
-GET {{baseUrl}}/users?search=vali&page=1&limit=10
-
-### Update user #1
-PATCH {{baseUrl}}/users/1
-Content-Type: application/json
-
-{
-  "name": "Updated name"
-}
-
-### Soft delete user #1
-DELETE {{baseUrl}}/users/1
-
-### Get user #1 (should be 404 after delete)
+### 4) After create, first list call again should be cached: false
 GET {{baseUrl}}/users
