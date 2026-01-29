@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
 import { seedAdmin } from './database/seed';
 
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

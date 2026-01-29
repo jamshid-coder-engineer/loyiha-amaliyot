@@ -6,7 +6,16 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis;
   private readonly logger = new Logger(RedisService.name);
 
+  constructor() {
+    this.initClient();
+  }
+
   onModuleInit() {
+    this.initClient();
+  }
+
+  private initClient() {
+    if (this.client) return;
     const host = process.env.REDIS_HOST || '127.0.0.1';
     const port = Number(process.env.REDIS_PORT || 6379);
 
@@ -15,11 +24,13 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     this.client.on('connect', () => this.logger.log(`Redis connected: ${host}:${port}`));
     this.client.on('error', (err) => this.logger.error(`Redis error: ${err.message}`));
   }
+
   onModuleDestroy() {
     return this.client?.quit();
   }
 
   getClient() {
+    this.initClient();
     return this.client;
   }
 
@@ -38,4 +49,3 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     if (keys.length) await this.client.del(keys);
   }
 }
-
