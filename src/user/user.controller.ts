@@ -1,15 +1,16 @@
 import { Controller, Body, Post, Get, Param, ParseIntPipe, Query, Delete, HttpCode, Patch } from '@nestjs/common';
 import { UserService } from './user.service';
 
-import { JwtAuthGuard } from 'src/auth/jwt-auth-guard';
-import type { Request } from 'express';
-import { Roles } from 'src/auth/roles.decorator';
-import { Role } from 'src/auth/role-enum';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { UseGuards, Req } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth-guard';
+
+import { ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { QueryUserDto } from './dto/query.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from 'src/auth/role-enum';
+import { RolesGuard } from 'src/auth/roles.guard';
 
 @ApiTags('Users')
 @Controller('users')
@@ -21,6 +22,21 @@ export class UserController {
     return this.userService.create(dto)
   }
 
+@Get('admin/stats')
+@Roles(Role.ADMIN)
+@UseGuards(JwtAuthGuard, RolesGuard)
+getAdminStats() {
+  return {
+    message: 'Admin only data',
+    time: new Date(),
+  };
+}
+
+@Get('me')
+@UseGuards(JwtAuthGuard)
+getMe(@Req() req) {
+  return req.user;
+}
   @Get()
   findAll(@Query() query: QueryUserDto) {
     return this.userService.findAll(query)

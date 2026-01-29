@@ -3,7 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entity/user.entity';
-import { ILike, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt'
 import { QueryUserDto } from './dto/query.dto';
 
@@ -31,20 +31,39 @@ export class UserService {
   }
 
   async findAll(query: QueryUserDto) {
-    const { page, limit, search } = query;
+  const { page, limit, search, sortBy, order } = query;
 
-    const [items, total] = await this.repo.findAndCount({
-      where: search ? [
-        { name: ILike(`%${search}%`) },
-        { email: ILike(`%${search}%`) }
-      ]: {},
-      order: { id: 'ASC'},
-      take: limit,
-      skip: (page - 1) * limit
+  const qb = this.repo.createQueryBuilder('u')
+    .where('u.deletedAt IS NULL');
+
+  if (search) {
+    qb.andWhere('(LOWER(u.name) LIKE :q OR LOWER(u.email) LIKE :q)', {
+      q: `%${search.toLowerCase()}%`,
     });
-    return { total, page, limit, items }
-  } 
+  }
 
+  const total = await qb.getCount();
+
+  const items = await qb
+    .orderBy(`u.${sortBy}`, order.toUpperCase() as 'ASC' | 'DESC')
+    .skip((page - 1) * limit)
+    .take(limit)
+    .getMany();
+
+  return {
+    total,
+    page,
+    limit,
+    items,
+  };
+}
+
+  async findByEmailWithPassword(email: string) {
+    return await this.repo.findOne( {where: { email},
+    select: ['id', 'email', 'password', 'name', 'role'] 
+  });
+  }
+      
   async findOne(id: number) {
     const user = await this.repo.findOneBy({ id });
     if (!user) throw new NotFoundException(`user with id ${id} not found`)
